@@ -1,0 +1,18 @@
+apply plugin: 'java'
+apply plugin: 'application'
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    compile 'org.slf4j:slf4j-api:1.7.7'
+    compile 'org.glassfish.tyrus.bundles:tyrus-standalone-client:1.10'
+    testCompile 'junit:junit:4.12'
+}
+
+mainClassName = 'WSClient'
+
+startScripts {
+    applicationName = 'WSClient'
+}
