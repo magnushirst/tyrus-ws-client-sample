@@ -1,7 +1,11 @@
 import java.io.IOException;
 
+import java.io.InputStream;
 import java.net.URI;
 import java.nio.*;
+import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.Properties;
 
 import javax.websocket.ClientEndpointConfig;
 import javax.websocket.Endpoint;
@@ -13,6 +17,8 @@ import org.glassfish.grizzly.ssl.SSLContextConfigurator;
 import org.glassfish.grizzly.ssl.SSLEngineConfigurator;
 import org.glassfish.tyrus.client.ClientManager;
 import org.glassfish.tyrus.client.ClientProperties;
+import org.glassfish.tyrus.container.grizzly.client.GrizzlyClientSocket;
+import org.glassfish.tyrus.core.Base64Utils;
 
 public class WSClient {
     public static final String WS_SERVER_URI = "wss://echo.websocket.org";
@@ -36,6 +42,16 @@ public class WSClient {
 
     public void connect() {
         try {
+            // load properties file
+            InputStream inStream = WSClient.class.getClassLoader().getResourceAsStream("settings.properties");
+            if (inStream == null) {
+                throw new IllegalArgumentException("Can't read the properties file you specified");
+            }
+            final Properties prop = new Properties();
+            prop.load(inStream);
+            inStream.close();
+
+            // TLS
             final ClientEndpointConfig configuration = ClientEndpointConfig.Builder.create().build();
             ClientManager client = ClientManager.createClient();
             final SSLContextConfigurator defaultConfig = new SSLContextConfigurator();
@@ -43,6 +59,14 @@ public class WSClient {
                     new SSLEngineConfigurator(defaultConfig, true, false, false);
             client.getProperties().put(ClientProperties.SSL_ENGINE_CONFIGURATOR,
                     sslEngineConfigurator);
+
+            // proxy
+            client.getProperties().put(ClientManager.WLS_PROXY_HOST,     prop.getProperty("PROXY_HOST"));
+            client.getProperties().put(ClientManager.WLS_PROXY_PORT,     Integer.parseInt(prop.getProperty("PROXY_PORT")));
+            client.getProperties().put(ClientManager.WLS_PROXY_USERNAME, prop.getProperty("PROXY_USERNAME"));
+            client.getProperties().put(ClientManager.WLS_PROXY_PASSWORD, prop.getProperty("PROXY_PASSWORD"));
+
+            // websocket connection
             client.connectToServer(
                     new Endpoint() {
                         @Override

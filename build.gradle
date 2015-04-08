@@ -11,8 +11,16 @@ dependencies {
     testCompile 'junit:junit:4.12'
 }
 
+task copyConf(type: Copy) {
+    from 'conf'
+    into 'build/classes/main'
+    include('**/**/*.properties')
+}
+
 mainClassName = 'WSClient'
 
 startScripts {
     applicationName = 'WSClient'
 }
+
+run.dependsOn copyConf
